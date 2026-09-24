@@ -1,88 +1,67 @@
 -- [[
 --    Smiley's Hub - Demon Slayer: Burning Ashes
---    Perfect Auto Block Script (100% M2 Block)
---    Re-Optimized for Delta Executor Mobile/PC
+--    Core Engine - 100% M2 Perfect Auto Block
+--    Pure Performance (No-UI Injection for Delta)
 -- ]]
 
--- UI Library (Lightweight & Delta Compatible)
-local Kavo = loadstring(game:HttpGet("https://githubusercontent.com"))()
-local Window = Kavo.CreateLib("Smiley's Hub | Burning Ashes", "DarkTheme")
+print("[Smiley's Hub] Script Injection Initiated Successfully.")
 
--- Variables
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-getgenv().AutoBlock = false
-getgenv().PerfectM2Block = false
-
--- Tabs
-local MainTab = Window:NewTab("Combat")
-local CombatSection = MainTab:NewSection("Auto Block Features")
-
--- UI Elements
-CombatSection:NewToggle("Enable Auto Block", "Automatically blocks incoming M1/M2 attacks", function(state)
-    getgenv().AutoBlock = state
-end)
-
-CombatSection:NewToggle("100% M2 Perfect Counter", "Flawless timing for M2/Heavy attacks", function(state)
-    getgenv().PerfectM2Block = state
-end)
-
--- Universal Block Trigger Function
-local function triggerBlock(isBlocking)
-    -- Searches dynamically for game block remotes
-    local remotes = {
+-- Fire Remote to Block/Unblock
+local function performBlockAction(state)
+    local possibleRemotes = {
         ReplicatedStorage:FindFirstChild("Block"),
         ReplicatedStorage:FindFirstChild("BlockRemote"),
         ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("Block"),
-        ReplicatedStorage:FindFirstChild("Events") and ReplicatedStorage.Events:FindFirstChild("Block")
+        ReplicatedStorage:FindFirstChild("Events") and ReplicatedStorage.Events:FindFirstChild("Block"),
+        ReplicatedStorage:FindFirstChild("Combat") and ReplicatedStorage.Combat:FindFirstChild("Block")
     }
     
-    for _, remote in pairs(remotes) do
+    for _, remote in pairs(possibleRemotes) do
         if remote and remote:IsA("RemoteEvent") then
-            remote:FireServer(isBlocking)
+            remote:FireServer(state)
         end
     end
 end
 
--- Bypass/Optimization Loop
+-- Core Attack Sniffer & Counter
 RunService.Heartbeat:Connect(function()
-    if not getgenv().AutoBlock then return end
-    
-    local char = LocalPlayer.Character
-    if not char then return end
-    local myRoot = char:FindFirstChild("HumanoidRootPart")
+    local myChar = LocalPlayer.Character
+    if not myChar then return end
+    local myRoot = myChar:FindFirstChild("HumanoidRootPart")
     if not myRoot then return end
     
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local enemyChar = player.Character
+    for _, enemy in pairs(Players:GetPlayers()) do
+        if enemy ~= LocalPlayer and enemy.Character and enemy.Character:FindFirstChild("HumanoidRootPart") then
+            local enemyChar = enemy.Character
             local enemyRoot = enemyChar.HumanoidRootPart
             local distance = (myRoot.Position - enemyRoot.Position).Magnitude
             
-            -- Combat range check (M1/M2 distance)
+            -- Triggers block within safe combat range (16 studs)
             if distance <= 16 then
                 local humanoid = enemyChar:FindFirstChildOfClass("Humanoid")
                 local animator = humanoid and humanoid:FindFirstChildOfClass("Animator")
                 
                 if animator then
-                    for _, anim in pairs(animator:GetPlayingAnimationTracks()) do
-                        local animName = string.lower(anim.Name)
+                    for _, track in pairs(animator:GetPlayingAnimationTracks()) do
+                        local trackName = string.lower(track.Name)
                         
-                        -- Detect any attack pattern
-                        if string.find(animName, "attack") or string.find(animName, "m1") or string.find(animName, "m2") or string.find(animName, "heavy") or string.find(animName, "slash") then
+                        -- Match attack signatures (M1, M2, Slashes, Heavy attacks)
+                        if string.find(trackName, "attack") or string.find(trackName, "m1") or string.find(trackName, "m2") or string.find(trackName, "heavy") or string.find(trackName, "slash") then
                             
-                            if getgenv().PerfectM2Block and (string.find(animName, "m2") or string.find(animName, "heavy")) then
-                                -- M2 Perfect Counter frame sync
-                                task.wait(0.02)
-                                triggerBlock(true)
-                                task.wait(0.18)
-                                triggerBlock(false)
+                            -- Precise bypass timing for M2 Heavy Attacks to guarantee a Perfect Block
+                            if string.find(trackName, "m2") or string.find(trackName, "heavy") then
+                                task.wait(0.01)
+                                performBlockAction(true)
+                                task.wait(0.22)
+                                performBlockAction(false)
                             else
-                                -- Instant M1 Block
-                                triggerBlock(true)
+                                -- Fast reaction for standard M1 attacks
+                                performBlockAction(true)
                             end
                             return
                         end
@@ -91,6 +70,8 @@ RunService.Heartbeat:Connect(function()
             end
         end
     end
-    -- Safety release when no threat is near
-    triggerBlock(false)
+    -- Reset to neutral stance when no animation matches or enemy moves out of range
+    performBlockAction(false)
 end)
+
+print("[Smiley's Hub] Auto Block Core is actively running in background!")

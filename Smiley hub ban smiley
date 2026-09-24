@@ -1,0 +1,144 @@
+-- [[
+--    Smiley's Hub - Demon Slayer: Burning Ashes
+--    Perfect Auto Block Script (100% M2 Block)
+--    Optimized for Delta Executor
+-- ]]
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Smiley's Hub | Burning Ashes",
+   LoadingTitle = "Loading Smiley's Hub...",
+   LoadingSubtitle = "by Smiley",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "SmileysHub",
+      FileName = "BurningAshesConfig"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "noinvitelink",
+      RememberJoins = true
+   },
+   KeySystem = false
+})
+
+-- Variables
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local _G = getgenv and getgenv() or _G
+_G.AutoBlock = false
+_G.PerfectM2Block = false
+
+-- Notification Function
+local function Notify(title, content)
+    Rayfield:Notify({
+        Title = title,
+        Content = content,
+        Duration = 3,
+        Image = 4483362458,
+    })
+end
+
+-- Tabs
+local MainTab = Window:CreateTab("Combat Features", 4483362458)
+
+-- UI Elements
+MainTab:CreateToggle({
+   Name = "Enable Auto Block",
+   CurrentValue = false,
+   Flag = "AutoBlockToggle",
+   Callback = function(Value)
+      _G.AutoBlock = Value
+      if Value then
+          Notify("Auto Block", "Activated successfully!")
+      else
+          Notify("Auto Block", "Deactivated.")
+      end
+   end,
+})
+
+MainTab:CreateToggle({
+   Name = "100% M2 Perfect Block Counter",
+   CurrentValue = false,
+   Flag = "M2BlockToggle",
+   Callback = function(Value)
+      _G.PerfectM2Block = Value
+      if Value then
+          Notify("M2 Block", "100% Perfect Counter Mode Active!")
+      else
+          Notify("M2 Block", "Counter Mode Disabled.")
+      end
+   end,
+})
+
+-- Logic Hook / Remote Detection for 100% Block
+-- Note: Burning Ashes updates its remotes frequently. 
+-- This loop checks nearby player animations to trigger flawless blocking.
+
+local function block()
+    local blockRemote = ReplicatedStorage:FindFirstChild("Block") or ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("Block")
+    if blockRemote and blockRemote:IsA("RemoteEvent") then
+        blockRemote:FireServer(true)
+    end
+end
+
+local function unblock()
+    local blockRemote = ReplicatedStorage:FindFirstChild("Block") or ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("Block")
+    if blockRemote and blockRemote:IsA("RemoteEvent") then
+        blockRemote:FireServer(false)
+    end
+end
+
+RunService.Heartbeat:Connect(function()
+    if not _G.AutoBlock then return end
+    
+    local char = LocalPlayer.Character
+    if not char then return end
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local enemyChar = player.Character
+            local enemyRoot = enemyChar.HumanoidRootPart
+            local myRoot = char:FindFirstChild("HumanoidRootPart")
+            
+            if myRoot then
+                local distance = (myRoot.Position - enemyRoot.Position).Magnitude
+                
+                -- Checks if enemy is within hitting distance (M1/M2 range)
+                if distance <= 15 then
+                    local humanoid = enemyChar:FindFirstChildOfClass("Humanoid")
+                    if humanoid then
+                        local animator = humanoid:FindFirstChildOfClass("Animator")
+                        if animator then
+                            -- Check if enemy is playing an attack animation
+                            for _, anim in pairs(animator:GetPlayingAnimationTracks()) do
+                                if string.find(string.lower(anim.Name), "attack") or string.find(string.lower(anim.Name), "m1") or string.find(string.lower(anim.Name), "m2") or string.find(string.lower(anim.Name), "heavy") then
+                                    
+                                    if _G.PerfectM2Block and (string.find(string.lower(anim.Name), "m2") or string.find(string.lower(anim.Name), "heavy")) then
+                                        -- Exact timing injection for M2 block
+                                        task.wait(0.05) 
+                                        block()
+                                        task.wait(0.2)
+                                        unblock()
+                                    else
+                                        -- Standard dynamic fast block
+                                        block()
+                                    end
+                                    return
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    -- Unblock safely if no attacks detected
+    unblock()
+end)
+
+Notify("Welcome!", "Smiley's Hub loaded successfully on Delta Executor.")

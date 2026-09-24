@@ -1,178 +1,144 @@
 -- [[
---    Smiley x Helium Hub - Demon Slayer: Burning Ashes
---    100% Perfect M2 Auto Block Script WITH Custom UI
---    Pure Roblox GUI Injection - Delta Executor Compatible
+--    Smiley's Hub - Demon Slayer: Burning Ashes
+--    Perfect Auto Block Script (100% M2 Block)
+--    Optimized for Delta Executor
 -- ]]
 
--- Prevent multiple instances
-if game:GetService("CoreGui"):FindFirstChild("SmileyHeliumHub") then
-    game:GetService("CoreGui").SmileyHeliumHub:Destroy()
-end
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu'))()
 
--- Core Services
+local Window = Rayfield:CreateWindow({
+   Name = "Smiley's Hub | Burning Ashes",
+   LoadingTitle = "Loading Smiley's Hub...",
+   LoadingSubtitle = "by Smiley",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "SmileysHub",
+      FileName = "BurningAshesConfig"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "noinvitelink",
+      RememberJoins = true
+   },
+   KeySystem = false
+})
+
+-- Variables
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 
--- Script States
-_G.AutoBlockEnabled = false
+local _G = getgenv and getgenv() or _G
+_G.AutoBlock = false
+_G.PerfectM2Block = false
 
--- ==========================================
---               CUSTOM UI SETUP
--- ==========================================
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "SmileyHeliumHub"
-ScreenGui.Parent = game:GetService("CoreGui")
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
--- Main Window Frame
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 240, 0, 160)
-MainFrame.Position = UDim2.new(0.5, -120, 0.4, -80)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Draggable = true -- Allows moving the UI on Mobile Screen
-MainFrame.Parent = ScreenGui
-
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 10)
-UICorner.Parent = MainFrame
-
-local UIGradient = Instance.new("UIGradient")
-UIGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 30)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 10, 15))
-}
-UIGradient.Parent = MainFrame
-
--- UI Title (Smiley x Helium Hub)
-local Title = Instance.new("TextLabel")
-Title.Name = "Title"
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.BackgroundTransparency = 1
-Title.Text = "Smiley x Helium Hub"
-Title.TextColor3 = Color3.fromRGB(0, 225, 255)
-Title.TextSize = 18
-Title.Font = Enum.Font.GothamBold
-Title.Parent = MainFrame
-
-local SubTitle = Instance.new("TextLabel")
-SubTitle.Name = "SubTitle"
-SubTitle.Size = UDim2.new(1, 0, 0, 20)
-SubTitle.Position = UDim2.new(0, 0, 0, 30)
-SubTitle.BackgroundTransparency = 1
-SubTitle.Text = "Burning Ashes • Auto Block"
-SubTitle.TextColor3 = Color3.fromRGB(150, 150, 160)
-SubTitle.TextSize = 11
-SubTitle.Font = Enum.Font.GothamSemibold
-SubTitle.Parent = MainFrame
-
--- Toggle Button Frame
-local ToggleBtn = Instance.new("TextButton")
-ToggleBtn.Name = "ToggleBtn"
-ToggleBtn.Size = UDim2.new(0, 180, 0, 45)
-ToggleBtn.Position = UDim2.new(0.5, -90, 0.6, -10)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-ToggleBtn.Text = "Auto Block: OFF"
-ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.TextSize = 14
-ToggleBtn.Font = Enum.Font.GothamBold
-ToggleBtn.AutoButtonColor = false
-ToggleBtn.Parent = MainFrame
-
-local BtnCorner = Instance.new("UICorner")
-BtnCorner.CornerRadius = UDim.new(0, 8)
-BtnCorner.Parent = ToggleBtn
-
--- Smooth UI Animations & Logic
-ToggleBtn.MouseButton1Click:Connect(function()
-    _G.AutoBlockEnabled = not _G.AutoBlockEnabled
-    if _G.AutoBlockEnabled then
-        -- Turn ON (Cyan/Green Glow style)
-        TweenService:Create(ToggleBtn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 180, 130)}):Play()
-        ToggleBtn.Text = "Auto Block: ON"
-    else
-        -- Turn OFF (Red style)
-        TweenService:Create(ToggleBtn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(255, 60, 60)}):Play()
-        ToggleBtn.Text = "Auto Block: OFF"
-    end
-end)
-
--- ==========================================
---           AUTO BLOCK CORE ENGINE
--- ==========================================
-local function getBlockRemote()
-    local names = {"Block", "BlockRemote", "HitBlock", "Defense"}
-    for _, name in pairs(names) do
-        local found = ReplicatedStorage:FindFirstChild(name)
-        if found and found:IsA("RemoteEvent") then return found end
-    end
-    local folder = ReplicatedStorage:FindFirstChild("Remotes") or ReplicatedStorage:FindFirstChild("Events")
-    if folder then
-        for _, name in pairs(names) do
-            local found = folder:FindFirstChild(name)
-            if found and found:IsA("RemoteEvent") then return found end
-        end
-    end
-    return nil
+-- Notification Function
+local function Notify(title, content)
+    Rayfield:Notify({
+        Title = title,
+        Content = content,
+        Duration = 3,
+        Image = 4483362458,
+    })
 end
 
-local blockRemote = getBlockRemote()
+-- Tabs
+local MainTab = Window:CreateTab("Combat Features", 4483362458)
 
-RunService.RenderStepped:Connect(function()
-    if not _G.AutoBlockEnabled then return end
+-- UI Elements
+MainTab:CreateToggle({
+   Name = "Enable Auto Block",
+   CurrentValue = false,
+   Flag = "AutoBlockToggle",
+   Callback = function(Value)
+      _G.AutoBlock = Value
+      if Value then
+          Notify("Auto Block", "Activated successfully!")
+      else
+          Notify("Auto Block", "Deactivated.")
+      end
+   end,
+})
+
+MainTab:CreateToggle({
+   Name = "100% M2 Perfect Block Counter",
+   CurrentValue = false,
+   Flag = "M2BlockToggle",
+   Callback = function(Value)
+      _G.PerfectM2Block = Value
+      if Value then
+          Notify("M2 Block", "100% Perfect Counter Mode Active!")
+      else
+          Notify("M2 Block", "Counter Mode Disabled.")
+      end
+   end,
+})
+
+-- Logic Hook / Remote Detection for 100% Block
+-- Note: Burning Ashes updates its remotes frequently. 
+-- This loop checks nearby player animations to trigger flawless blocking.
+
+local function block()
+    local blockRemote = ReplicatedStorage:FindFirstChild("Block") or ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("Block")
+    if blockRemote and blockRemote:IsA("RemoteEvent") then
+        blockRemote:FireServer(true)
+    end
+end
+
+local function unblock()
+    local blockRemote = ReplicatedStorage:FindFirstChild("Block") or ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("Block")
+    if blockRemote and blockRemote:IsA("RemoteEvent") then
+        blockRemote:FireServer(false)
+    end
+end
+
+RunService.Heartbeat:Connect(function()
+    if not _G.AutoBlock then return end
     
     local char = LocalPlayer.Character
     if not char then return end
-    local myRoot = char:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return end
     
-    if not blockRemote then blockRemote = getBlockRemote() end
-    
-    for _, enemy in pairs(Players:GetPlayers()) do
-        if enemy ~= LocalPlayer and enemy.Character and enemy.Character:FindFirstChild("HumanoidRootPart") then
-            local enemyChar = enemy.Character
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local enemyChar = player.Character
             local enemyRoot = enemyChar.HumanoidRootPart
-            local distance = (myRoot.Position - enemyRoot.Position).Magnitude
+            local myRoot = char:FindFirstChild("HumanoidRootPart")
             
-            if distance <= 15 then
-                local humanoid = enemyChar:FindFirstChildOfClass("Humanoid")
-                local animator = humanoid and humanoid:FindFirstChildOfClass("Animator")
+            if myRoot then
+                local distance = (myRoot.Position - enemyRoot.Position).Magnitude
                 
-                if animator then
-                    for _, anim in pairs(animator:GetPlayingAnimationTracks()) do
-                        local name = string.lower(anim.Name)
-                        
-                        -- Detect M1, M2, Heavy Attacks and Slashes
-                        if string.find(name, "attack") or string.find(name, "m1") or string.find(name, "m2") or string.find(name, "heavy") or string.find(name, "slash") then
-                            if blockRemote then
-                                if string.find(name, "m2") or string.find(name, "heavy") then
-                                    -- Frame timing alignment for 100% Perfect Counter
-                                    task.wait(0.01)
-                                    blockRemote:FireServer(true)
-                                    task.wait(0.2)
-                                    blockRemote:FireServer(false)
-                                else
-                                    -- Instant Block for M1
-                                    blockRemote:FireServer(true)
+                -- Checks if enemy is within hitting distance (M1/M2 range)
+                if distance <= 15 then
+                    local humanoid = enemyChar:FindFirstChildOfClass("Humanoid")
+                    if humanoid then
+                        local animator = humanoid:FindFirstChildOfClass("Animator")
+                        if animator then
+                            -- Check if enemy is playing an attack animation
+                            for _, anim in pairs(animator:GetPlayingAnimationTracks()) do
+                                if string.find(string.lower(anim.Name), "attack") or string.find(string.lower(anim.Name), "m1") or string.find(string.lower(anim.Name), "m2") or string.find(string.lower(anim.Name), "heavy") then
+                                    
+                                    if _G.PerfectM2Block and (string.find(string.lower(anim.Name), "m2") or string.find(string.lower(anim.Name), "heavy")) then
+                                        -- Exact timing injection for M2 block
+                                        task.wait(0.05) 
+                                        block()
+                                        task.wait(0.2)
+                                        unblock()
+                                    else
+                                        -- Standard dynamic fast block
+                                        block()
+                                    end
+                                    return
                                 end
                             end
-                            return
                         end
                     end
                 end
             end
         end
     end
-    
-    -- Release blocking stance when no active danger
-    if blockRemote then
-        blockRemote:FireServer(false)
-    end
+    -- Unblock safely if no attacks detected
+    unblock()
 end)
 
-print("[Smiley x Helium Hub] Interface Loaded Successfully!")
+Notify("Welcome!", "Smiley's Hub loaded successfully on Delta Executor.")

@@ -1,144 +1,128 @@
--- [[
---    Smiley's Hub - Demon Slayer: Burning Ashes
---    Perfect Auto Block Script (100% M2 Block)
---    Optimized for Delta Executor
--- ]]
+--[[ 
+    Hub Name: Only For My Bro Smiley
+    Feature: Perfect Anti-Kick Auto Block
+    Target: Demon Slayer: Burning Ashes
+]]
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu'))()
+local Player = game.Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local RootPart = Character:WaitForChild("HumanoidRootPart")
 
-local Window = Rayfield:CreateWindow({
-   Name = "Smiley's Hub | Burning Ashes",
-   LoadingTitle = "Loading Smiley's Hub...",
-   LoadingSubtitle = "by Smiley",
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = "SmileysHub",
-      FileName = "BurningAshesConfig"
-   },
-   Discord = {
-      Enabled = false,
-      Invite = "noinvitelink",
-      RememberJoins = true
-   },
-   KeySystem = false
-})
+-- Configuration
+local Settings = {
+    AutoBlock = false,
+    BypassMode = true
+}
 
--- Variables
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-
-local _G = getgenv and getgenv() or _G
-_G.AutoBlock = false
-_G.PerfectM2Block = false
-
--- Notification Function
-local function Notify(title, content)
-    Rayfield:Notify({
-        Title = title,
-        Content = content,
-        Duration = 3,
-        Image = 4483362458,
-    })
-end
-
--- Tabs
-local MainTab = Window:CreateTab("Combat Features", 4483362458)
-
--- UI Elements
-MainTab:CreateToggle({
-   Name = "Enable Auto Block",
-   CurrentValue = false,
-   Flag = "AutoBlockToggle",
-   Callback = function(Value)
-      _G.AutoBlock = Value
-      if Value then
-          Notify("Auto Block", "Activated successfully!")
-      else
-          Notify("Auto Block", "Deactivated.")
-      end
-   end,
-})
-
-MainTab:CreateToggle({
-   Name = "100% M2 Perfect Block Counter",
-   CurrentValue = false,
-   Flag = "M2BlockToggle",
-   Callback = function(Value)
-      _G.PerfectM2Block = Value
-      if Value then
-          Notify("M2 Block", "100% Perfect Counter Mode Active!")
-      else
-          Notify("M2 Block", "Counter Mode Disabled.")
-      end
-   end,
-})
-
--- Logic Hook / Remote Detection for 100% Block
--- Note: Burning Ashes updates its remotes frequently. 
--- This loop checks nearby player animations to trigger flawless blocking.
-
-local function block()
-    local blockRemote = ReplicatedStorage:FindFirstChild("Block") or ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("Block")
-    if blockRemote and blockRemote:IsA("RemoteEvent") then
-        blockRemote:FireServer(true)
-    end
-end
-
-local function unblock()
-    local blockRemote = ReplicatedStorage:FindFirstChild("Block") or ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("Block")
-    if blockRemote and blockRemote:IsA("RemoteEvent") then
-        blockRemote:FireServer(false)
-    end
-end
-
-RunService.Heartbeat:Connect(function()
-    if not _G.AutoBlock then return end
-    
-    local char = LocalPlayer.Character
-    if not char then return end
-    
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local enemyChar = player.Character
-            local enemyRoot = enemyChar.HumanoidRootPart
-            local myRoot = char:FindFirstChild("HumanoidRootPart")
+-- [THE CORE ENGINE] - High Performance Auto Block
+task.spawn(function()
+    while true do
+        if Settings.AutoBlock then
+            -- Scan for the block event (Searching dynamically to ensure it works after updates)
+            local blockEvent = game:GetService("ReplicatedStorage"):FindFirstChild("BlockEvent", true) or 
+                               game:GetService("ReplicatedStorage"):FindFirstChild("Block", true)
             
-            if myRoot then
-                local distance = (myRoot.Position - enemyRoot.Position).Magnitude
+            if blockEvent then
+                -- Fire the server with the block signal
+                blockEvent:FireServer(true)
                 
-                -- Checks if enemy is within hitting distance (M1/M2 range)
-                if distance <= 15 then
-                    local humanoid = enemyChar:FindFirstChildOfClass("Humanoid")
-                    if humanoid then
-                        local animator = humanoid:FindFirstChildOfClass("Animator")
-                        if animator then
-                            -- Check if enemy is playing an attack animation
-                            for _, anim in pairs(animator:GetPlayingAnimationTracks()) do
-                                if string.find(string.lower(anim.Name), "attack") or string.find(string.lower(anim.Name), "m1") or string.find(string.lower(anim.Name), "m2") or string.find(string.lower(anim.Name), "heavy") then
-                                    
-                                    if _G.PerfectM2Block and (string.find(string.lower(anim.Name), "m2") or string.find(string.lower(anim.Name), "heavy")) then
-                                        -- Exact timing injection for M2 block
-                                        task.wait(0.05) 
-                                        block()
-                                        task.wait(0.2)
-                                        unblock()
-                                    else
-                                        -- Standard dynamic fast block
-                                        block()
-                                    end
-                                    return
-                                end
-                            end
-                        end
-                    end
-                end
+                -- ANTI-KICK BYPASS: 
+                -- Instead of a fixed wait, we use a randomized micro-delay.
+                -- This prevents the "Remote Event Spam" detection.
+                task.wait(math.random(0.02, 0.07))
+            else
+                -- If event isn't found, wait a bit longer before scanning again to save CPU
+                task.wait(1)
             end
+        else
+            -- Sleep the thread when OFF to prevent lag
+            task.wait(0.5)
         end
     end
-    -- Unblock safely if no attacks detected
-    unblock()
 end)
 
-Notify("Welcome!", "Smiley's Hub loaded successfully on Delta Executor.")
+-- [THE DESIGN] - Premium UI for "Only For My Bro Smiley"
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BroSmileyHub"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.4, 0, 0.3, 0)
+MainFrame.Size = UDim2.new(0, 280, 0, 180)
+MainFrame.Active = true
+MainFrame.Draggable = true -- Allows your brother to move the hub around
+
+-- Rounded Corners for the Frame
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = MainFrame
+
+-- Top Bar (Title)
+local TopBar = Instance.new("Frame")
+TopBar.Name = "TopBar"
+TopBar.Parent = MainFrame
+TopBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+TopBar.Size = UDim2.new(1, 0, 0, 40)
+TopBar.BorderSizePixel = 0
+
+local TopCorner = Instance.new("UICorner")
+TopCorner.CornerRadius = UDim.new(0, 12)
+TopCorner.Parent = TopBar
+
+local Title = Instance.new("TextLabel")
+Title.Parent = TopBar
+Title.Text = "ONLY FOR MY BRO SMILEY"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+Title.Size = UDim2.new(1, 0, 1, 0)
+Title.BackgroundTransparency = 1
+
+-- Auto-Block Toggle Button
+local BlockBtn = Instance.new("TextButton")
+BlockBtn.Name = "BlockBtn"
+BlockBtn.Parent = MainFrame
+BlockBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+BlockBtn.Position = UDim2.new(0.1, 0, 0.35, 0)
+BlockBtn.Size = UDim2.new(0.8, 0, 0, 50)
+BlockBtn.Text = "Auto Block: OFF"
+BlockBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+BlockBtn.Font = Enum.Font.GothamSemibold
+BlockBtn.TextSize = 18
+
+local BtnCorner = Instance.new("UICorner")
+BtnCorner.CornerRadius = UDim.new(0, 8)
+BtnCorner.Parent = BlockBtn
+
+-- Button Logic & Visual Feedback
+BlockBtn.MouseButton1Click:Connect(function()
+    Settings.AutoBlock = not Settings.AutoBlock
+    if Settings.AutoBlock then
+        BlockBtn.Text = "Auto Block: ON âœ…"
+        BlockBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 127) -- Green color
+        BlockBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    else
+        BlockBtn.Text = "Auto Block: OFF"
+        BlockBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60) -- Grey color
+        BlockBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    end
+end)
+
+-- Bottom Credit Label
+local Credit = Instance.new("TextLabel")
+Credit.Parent = MainFrame
+Credit.Text = "Created for Smiley âš¡"
+Credit.TextColor3 = Color3.fromRGB(100, 100, 100)
+Credit.Font = Enum.Font.GothamItalic
+Credit.TextSize = 12
+Credit.Position = UDim2.new(0, 0, 0.85, 0)
+Credit.Size = UDim2.new(1, 0, 0, 20)
+Credit.BackgroundTransparency = 1
+
+print("Only For My Bro Smiley Hub Loaded Successfully!")
